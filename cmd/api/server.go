@@ -2,7 +2,7 @@ package api
 
 import "net/http"
 
-type keyKeeper struct {}
+type keyKeeper struct{}
 
 func NewkeyKeeper() (*keyKeeper, error) {
 	return &keyKeeper{}, nil
