@@ -45,3 +45,8 @@ func RandomPasswordHash(passwordLength int) string {
 func RandomEmail() string {
 	return fmt.Sprintf("%s@gmail.com", RandomString(10))
 }
+
+// RandomWebsiteURL returns a random website url.
+func RandomWebsiteURL() string {
+	return fmt.Sprintf("%s.%s", RandomString(6), RandomString(3))
+}
