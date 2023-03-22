@@ -7,6 +7,60 @@ import (
 	"context"
 )
 
+const changeEmail = `-- name: ChangeEmail :one
+UPDATE users
+SET email = $1
+WHERE id = $2
+RETURNING id, full_name, hashed_password, email, password_changed_at, created_at, is_activated
+`
+
+type ChangeEmailParams struct {
+	Email string `json:"email"`
+	ID    int64  `json:"id"`
+}
+
+func (q *Queries) ChangeEmail(ctx context.Context, arg ChangeEmailParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, changeEmail, arg.Email, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.HashedPassword,
+		&i.Email,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.IsActivated,
+	)
+	return i, err
+}
+
+const changePassword = `-- name: ChangePassword :one
+UPDATE users
+SET hashed_password = $1
+WHERE email = $2
+RETURNING id, full_name, hashed_password, email, password_changed_at, created_at, is_activated
+`
+
+type ChangePasswordParams struct {
+	HashedPassword string `json:"hashed_password"`
+	Email          string `json:"email"`
+}
+
+func (q *Queries) ChangePassword(ctx context.Context, arg ChangePasswordParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, changePassword, arg.HashedPassword, arg.Email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.HashedPassword,
+		&i.Email,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.IsActivated,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
   full_name,

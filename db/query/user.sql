@@ -16,3 +16,15 @@ UPDATE users
 SET is_activated = false
 WHERE id = $1 AND email = $2
 RETURNING *;
+
+-- name: ChangePassword :one
+UPDATE users
+SET hashed_password = $1
+WHERE email = $2
+RETURNING *;
+
+-- name: ChangeEmail :one
+UPDATE users
+SET email = $1
+WHERE id = $2
+RETURNING *;
