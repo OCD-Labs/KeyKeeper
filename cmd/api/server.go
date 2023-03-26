@@ -14,7 +14,7 @@ type KeyKeeper struct{
 func (app *KeyKeeper) Routes() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", app.ping)
+	mux.HandleFunc("/healthcheck", app.ping)
 	// Register the Swagger documentation handler
 	mux.HandleFunc("/docs", app.serveDocs)
 	mux.HandleFunc("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
