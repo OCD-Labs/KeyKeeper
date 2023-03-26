@@ -1,9 +1,14 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/OCD-Labs/KeyKeeper/internal/util"
+)
 
 type KeyKeeper struct{
 	SwaggerSpec []byte
+	Config util.Configs
 }
 
 func (app *KeyKeeper) Routes() http.Handler {

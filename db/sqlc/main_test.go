@@ -13,7 +13,7 @@ import (
 var testQuerier Querier
 
 func TestMain(m *testing.M) {
-	config, err := util.ParseConfigs("../../configs/")
+	config, err := util.ParseConfigs("../..")
 	if err != nil {
 		log.Fatalf("cannot parse configs: %v", err)
 	}
