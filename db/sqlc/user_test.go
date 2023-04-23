@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"testing"
 	"time"
@@ -11,11 +12,16 @@ import (
 )
 
 func createTestUser(t *testing.T) User {
+	now := time.Now()
 	// Set up test user parameters.
 	arg := CreateUserParams{
 		FullName:       fmt.Sprintf("%s %s", util.RandomString(6), util.RandomString(6)),
 		HashedPassword: util.RandomPasswordHash(12),
 		Email:          util.RandomEmail(),
+		ProfileImageUrl: sql.NullString{
+			String: util.RandomString(40),
+			Valid: true,
+		},
 	}
 
 	// Create the user.
@@ -27,8 +33,9 @@ func createTestUser(t *testing.T) User {
 	require.Equal(t, arg.FullName, user.FullName)
 	require.Equal(t, arg.Email, user.Email)
 	require.Equal(t, arg.HashedPassword, user.HashedPassword)
-	require.True(t, user.IsActivated)
-	require.Zero(t, user.PasswordChangedAt)
+	require.False(t, user.IsActive)
+	require.False(t, user.IsEmailVerified)
+	require.WithinDuration(t, now, user.PasswordChangedAt, time.Second)
 	require.NotZero(t, user.CreatedAt)
 
 	return user
@@ -53,7 +60,7 @@ func TestDeactivateUser(t *testing.T) {
 	require.NotEmpty(t, user)
 
 	// Check that the user is deactivated
-	require.False(t, user.IsActivated)
+	require.False(t, user.IsActive)
 }
 
 func TestGetUser(t *testing.T) {
@@ -70,7 +77,7 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, user.FullName, user1.FullName)
 	require.Equal(t, user.Email, user1.Email)
 	require.Equal(t, user.HashedPassword, user1.HashedPassword)
-	require.Equal(t, user.IsActivated, user1.IsActivated)
+	require.Equal(t, user.IsActive, user1.IsActive)
 
 	// Assert that the retrieved user's timestamps are within one
 	// second of the test user's timestamps.
@@ -122,4 +129,25 @@ func TestChangeEmail(t *testing.T) {
 	require.Equal(t, user.ID, user1.ID)
 	require.NotEqual(t, user.Email, user1.Email)
 	require.Equal(t, arg.Email, user1.Email)
+}
+
+func TestChangeProfileImage(t *testing.T) {
+	user := createTestUser(t)
+
+	arg := ChangeProfileImageParams{
+		ID: user.ID,
+		ProfileImageUrl: sql.NullString{
+			String: util.RandomString(40),
+			Valid: true,
+		},
+	}
+	user1, err := testQuerier.ChangeProfileImage(context.Background(), arg)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, user1)
+
+	// Assert that the retrieved user's ProfileImageUrl changed.
+	require.Equal(t, user.ID, user1.ID)
+	require.NotEqual(t, user.ProfileImageUrl.String, user1.ProfileImageUrl.String)
+	require.Equal(t, arg.ProfileImageUrl.String, user1.ProfileImageUrl.String)
 }

@@ -10,8 +10,11 @@ Table users as U {
   full_name varchar [not null]
   hashed_password varchar [not null]
   email varchar [unique, not null]
-  password_changed_at timestamptz [not null, default: '0001-01-01 00:00:00Z']
+  profile_image_url varchar
+  password_changed_at timestamptz [not null, default: `now()`]
   created_at timestamptz [not null, default: `now()`]
+  is_active boolean [not null, default: false]
+  is_email_verified boolean [not null, default: false]
 }
 
 Table sessions {
@@ -23,4 +26,17 @@ Table sessions {
   is_blocked boolean [not null, default: false]
   expires_at timestamptz [not null]
   created_at timestamptz [not null, default: `now()`]
+}
+
+Table reminders {
+  id bigserial [pk]
+  user_id bigint [ref: > U.id, not null]
+  website_url varchar [not null]
+  interval varchar [not null]
+  updated_at timestamptz [not null, default: `now()`]
+  extension jsonb
+
+  Indexes {
+    (user_id, website_url)
+  }
 }

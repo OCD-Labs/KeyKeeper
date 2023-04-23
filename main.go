@@ -1,28 +1,61 @@
 package main
 
 import (
-	_ "embed"
-	"log"
-	"net/http"
+	"database/sql"
+	"embed"
+	"io/fs"
+	"os"
+	"time"
 
-	"github.com/OCD-Labs/KeyKeeper/cmd/api"
+	"github.com/rs/zerolog/log"
+
+	"github.com/OCD-Labs/KeyKeeper/api"
+	db "github.com/OCD-Labs/KeyKeeper/db/sqlc"
 	"github.com/OCD-Labs/KeyKeeper/internal/util"
+	_ "github.com/lib/pq"
+	"github.com/rs/zerolog"
 )
 
-//go:embed "docs/specs.yaml"
-var embeddedSwaggerSpec []byte
+//go:embed docs/swagger
+var swaggerDocs embed.FS
 
 func main() {
-	config, err := util.ParseConfigs("./")
+	configs, err := util.ParseConfigs("./")
 	if err != nil {
-		log.Fatalf("failed to parse configurations: %v", err)
+		log.Fatal().Err(err).Msg("failed to parse configurations")
 	}
 
-	app := api.KeyKeeper{
-		SwaggerSpec: embeddedSwaggerSpec,
-		Config: config,
+	if configs.Env == "development" {
+		log.Logger = log.Output(
+			zerolog.ConsoleWriter{
+				Out: os.Stderr, 
+				TimeFormat: time.RFC3339,
+			},
+		).With().Caller().Logger()
 	}
 
-	log.Println("Starting server...")
-	http.ListenAndServe(":8081", app.Routes())
+	log.Info().Msg("connecting to DB")
+	dbConn, err := sql.Open(configs.DBDriver, configs.DBSource)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to connect to DB")
+	}
+	store := db.New(dbConn)
+
+	// Retrieve the swagger-ui files.
+	swaggerFiles, err := fs.Sub(swaggerDocs, "docs/swagger")
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to get subcontent from swaggerDocs")
+	}
+
+	log.Info().Msg("setting up application")
+	app, err := api.NewServer(configs, store, swaggerFiles, log.Logger)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed setting up application")
+	}
+
+	log.Info().Msg("starting/stopping server")
+	err = app.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed starting/stopping server")
+	}
 }
