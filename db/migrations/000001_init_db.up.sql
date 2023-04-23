@@ -3,9 +3,11 @@ CREATE TABLE "users" (
   "full_name" varchar NOT NULL,
   "hashed_password" varchar NOT NULL,
   "email" varchar UNIQUE NOT NULL,
-  "password_changed_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
+  "profile_image_url" varchar,
+  "password_changed_at" timestamptz NOT NULL DEFAULT (now()),
   "created_at" timestamptz NOT NULL DEFAULT (now()),
-  "is_activated" boolean NOT NULL DEFAULT true
+  "is_active" boolean NOT NULL DEFAULT false,
+  "is_email_verified" boolean NOT NULL DEFAULT false
 );
 
 CREATE TABLE "sessions" (
@@ -33,3 +35,10 @@ CREATE INDEX ON "reminders" ("user_id", "website_url");
 ALTER TABLE "sessions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 
 ALTER TABLE "reminders" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+
+CREATE OR REPLACE FUNCTION delete_expired_sessions()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM sessions WHERE expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;

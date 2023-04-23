@@ -1,15 +1,15 @@
 swagger: "2.0"
 info:
-  title: "Key Keeper API"
+  title: "KeyKeeper API"
   description: "
   This is a password reminder web service that helps users to maintain good password security practices. It allows users to set reminders for changing their passwords at regular intervals and keep track of the different websites where they have login credentials.
   With this service, users can receive reminder updates about their passwords for specific websites, which can help to increase their password security. For example, users can receive reminders to change their passwords every 90 days or whenever there is a data breach at a website where they have an account.
   The aim is to reduce the risk of security breaches due to weak or compromised passwords."
   version: "1.0.0"
-host: "https://keykeeper.onrender.com"
-basePath: "/v1"
+host: "keykeeper.onrender.com"
+basePath: "/api/v1"
 schemes:
-  - "http"
+  - "https"
 consumes:
   - "application/json"
 produces:
@@ -404,7 +404,80 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
+  /auth/google/login:
+    get:
+      summary: "Initiate Google Sign-In"
+      description: "Initiate Google Sign-In flow by redirecting the user to Google authorization endpoint"
+      responses:
+        '307':
+          description: "Temporary Redirect"
+          headers:
+            Location:
+              description: "URL to redirect the user to Google authorization endpoint"
+              schema:
+                type: "string"
+                example: "https://accounts.google.com/o/oauth2/auth"
+
+  /auth/google/callback:
+    get:
+      summary: "Google sign-in callback"
+      parameters:
+        - name: code
+          in: query
+          required: true
+          description: "The authorization code returned by Google after the user approves access"
+        - name: state
+          in: query
+          required: true
+          description: "A value passed by the client which is returned unchanged in the response"
+      responses:
+        '200':
+          description: "Success"
+          schema:
+            $ref: "#/definitions/LoginResponse"
+        '400':
+          description: "Bad Request"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        '401':
+          description: "Unauthorized"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        '404':
+          description: "Not Found"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        '500':
+          description: "Internal Server Error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 definitions:
+  LoginResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          token:
+            type: string
+          payload:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              user_id:
+                type: string
+              user_role:
+                type: string
+              issued_at:
+                type: string
+                format: date-time
+              expired_at:
+                type: string
+                format: date-time
+          user:
+            $ref: "#/definitions/User"
   User:
     type: "object"
     properties:
@@ -418,8 +491,11 @@ definitions:
       created_at:
         type: "string"
         format: date-time
+      profile_image_url:
+        type: string
       is_activated:
         type: boolean
+
   CreateUser:
     type: object
     properties:

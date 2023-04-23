@@ -89,3 +89,13 @@ func TestGetSession(t *testing.T) {
 	require.WithinDuration(t, session.CreatedAt, session1.CreatedAt, time.Second)
 	require.WithinDuration(t, session.ExpiresAt, session1.ExpiresAt, time.Second)
 }
+
+
+func TestDeleteExpiredSessions(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		createTestSession(t)
+	}
+
+	err := testQuerier.DeleteExpiredSession(context.Background())
+	require.NoError(t, err)
+}

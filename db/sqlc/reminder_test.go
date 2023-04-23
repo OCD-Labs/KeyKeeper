@@ -9,6 +9,7 @@ import (
 
 	"github.com/OCD-Labs/KeyKeeper/internal/util"
 	"github.com/stretchr/testify/require"
+	"github.com/tabbed/pqtype"
 )
 
 type extension struct {
@@ -33,7 +34,10 @@ func createTestReminder(t *testing.T, userID int64) Reminder {
 		UserID:     userID,
 		WebsiteUrl: util.RandomWebsiteURL(),
 		Interval:   "2 weeks",
-		Extension:  buf,
+		Extension:  pqtype.NullRawMessage{
+			RawMessage: buf,
+			Valid: true,
+		},
 	}
 
 	// Call the CreateReminder function with the arguments
@@ -51,7 +55,7 @@ func createTestReminder(t *testing.T, userID int64) Reminder {
 	// Unmarshal the reminder's extension into an extension
 	// struct and check that it matches the original extension
 	var ext1 extension
-	err = json.Unmarshal(reminder.Extension, &ext1)
+	err = json.Unmarshal(reminder.Extension.RawMessage, &ext1)
 	require.NoError(t, err)
 	require.Equal(t, ext, ext1)
 
@@ -184,7 +188,7 @@ func TestUpdateReminderConfigs(t *testing.T) {
 
 	// Unmarshal the reminder extensions.
 	ext := extension{}
-	require.NoError(t, json.Unmarshal(reminderExt, &ext))
+	require.NoError(t, json.Unmarshal(reminderExt.RawMessage, &ext))
 
 	// Update the reminder extensions.
 	ext.Action = "Updating configs"
@@ -196,14 +200,17 @@ func TestUpdateReminderConfigs(t *testing.T) {
 	reminder1, err := testQuerier.SetReminderConfigs(context.Background(), SetReminderConfigsParams{
 		ID:               reminder.ID,
 		WebsiteUrl:       reminder.WebsiteUrl,
-		UpdatedExtension: buf,
+		UpdatedExtension: pqtype.NullRawMessage{
+			RawMessage: buf,
+			Valid: true,
+		},
 	})
 	require.NoError(t, err)
 	require.NotEmpty(t, reminder1)
 
 	// Unmarshal the updated reminder extensions.
 	ext1 := extension{}
-	require.NoError(t, json.Unmarshal(reminder1.Extension, &ext1))
+	require.NoError(t, json.Unmarshal(reminder1.Extension.RawMessage, &ext1))
 
 	// Check that the updated extensions match the original extensions.
 	require.Equal(t, ext, ext1)
