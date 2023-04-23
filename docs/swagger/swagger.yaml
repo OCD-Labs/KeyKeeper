@@ -493,7 +493,9 @@ definitions:
         format: date-time
       profile_image_url:
         type: string
-      is_activated:
+      is_active:
+        type: boolean
+      is_email_verified:
         type: boolean
 
   CreateUser:
