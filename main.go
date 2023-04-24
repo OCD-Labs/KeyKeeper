@@ -7,6 +7,10 @@ import (
 	"os"
 	"time"
 
+	migrate "github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 
@@ -43,6 +47,8 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to DB")
 	}
+
+	runDBMigrations(configs.MigrationURL, configs.DBSource)
 	store := db.NewStore(dbConn)
 
 	// Retrieve the swagger-ui files.
@@ -82,4 +88,17 @@ func runTaskProcessor(config utils.Configs, redisOpt asynq.RedisClientOpt, store
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start task processor")
 	}
+}
+
+func runDBMigrations(migrationURL string, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create a new migrate instance")
+	}
+
+	if err := migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal().Err(err).Msg("failed to run migrateup")
+	}
+
+	log.Info().Msg("db migrated successfully")
 }
