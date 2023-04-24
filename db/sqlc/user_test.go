@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/OCD-Labs/KeyKeeper/internal/util"
+	"github.com/OCD-Labs/KeyKeeper/internal/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,12 +15,12 @@ func createTestUser(t *testing.T) User {
 	now := time.Now()
 	// Set up test user parameters.
 	arg := CreateUserParams{
-		FullName:       fmt.Sprintf("%s %s", util.RandomString(6), util.RandomString(6)),
-		HashedPassword: util.RandomPasswordHash(12),
-		Email:          util.RandomEmail(),
+		FullName:       fmt.Sprintf("%s %s", utils.RandomString(6), utils.RandomString(6)),
+		HashedPassword: utils.RandomPasswordHash(12),
+		Email:          utils.RandomEmail(),
 		ProfileImageUrl: sql.NullString{
-			String: util.RandomString(40),
-			Valid: true,
+			String: utils.RandomString(40),
+			Valid:  true,
 		},
 	}
 
@@ -91,7 +91,7 @@ func TestChangePassword(t *testing.T) {
 
 	// Set up parameters to change the test user password.
 	arg := ChangePasswordParams{
-		HashedPassword: util.RandomPasswordHash(16),
+		HashedPassword: utils.RandomPasswordHash(16),
 		Email:          user.Email,
 	}
 
@@ -116,7 +116,7 @@ func TestChangeEmail(t *testing.T) {
 
 	// Set up parameter to change the test user email.
 	arg := ChangeEmailParams{
-		Email: util.RandomEmail(),
+		Email: utils.RandomEmail(),
 		ID:    user.ID,
 	}
 
@@ -137,8 +137,8 @@ func TestChangeProfileImage(t *testing.T) {
 	arg := ChangeProfileImageParams{
 		ID: user.ID,
 		ProfileImageUrl: sql.NullString{
-			String: util.RandomString(40),
-			Valid: true,
+			String: utils.RandomString(40),
+			Valid:  true,
 		},
 	}
 	user1, err := testQuerier.ChangeProfileImage(context.Background(), arg)

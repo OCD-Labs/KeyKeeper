@@ -20,7 +20,8 @@ Table users as U {
 Table sessions {
   id uuid [pk]
   user_id bigint [ref: > U.id, not null]
-  refresh_token varchar [not null]
+  token varchar [not null]
+  scope varchar [not null]
   user_agent varchar [not null]
   client_ip varchar [not null]
   is_blocked boolean [not null, default: false]

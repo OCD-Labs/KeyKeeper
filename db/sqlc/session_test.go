@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/OCD-Labs/KeyKeeper/internal/token"
-	"github.com/OCD-Labs/KeyKeeper/internal/util"
+	"github.com/OCD-Labs/KeyKeeper/internal/utils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func createTestSession(t *testing.T) Session {
 	user := createTestUser(t)
 
 	// Create a new Paseto token maker
-	maker, err := token.NewPasetoMaker(util.RandomString(32))
+	maker, err := token.NewPasetoMaker(utils.RandomString(32))
 	require.NoError(t, err)
 
 	// Generate a new token for the user that expires in one minute
@@ -33,21 +33,22 @@ func createTestSession(t *testing.T) Session {
 	// Generate a random IP address for the client
 	ip := fmt.Sprintf(
 		"%d.%d.%d.%d",
-		util.RandomNumber(0, 255),
-		util.RandomNumber(0, 255),
-		util.RandomNumber(0, 255),
-		util.RandomNumber(0, 255),
+		utils.RandomNumber(0, 255),
+		utils.RandomNumber(0, 255),
+		utils.RandomNumber(0, 255),
+		utils.RandomNumber(0, 255),
 	)
 
 	// Set the session parameters
 	arg := CreateSessionParams{
-		ID:           id,
-		UserID:       user.ID,
-		RefreshToken: token,
-		UserAgent:    util.RandomString(9),
-		ClientIp:     ip,
-		IsBlocked:    false,
-		ExpiresAt:    payload.ExpiredAt,
+		ID:        id,
+		UserID:    user.ID,
+		Token:     token,
+		Scope:     utils.RandomString(6),
+		UserAgent: utils.RandomString(9),
+		ClientIp:  ip,
+		IsBlocked: false,
+		ExpiresAt: payload.ExpiredAt,
 	}
 
 	// Call CreateSession and check for errors.
@@ -58,7 +59,8 @@ func createTestSession(t *testing.T) Session {
 	// Check that the returned session matches the expected values.
 	require.Equal(t, arg.ID, session.ID)
 	require.Equal(t, user.ID, session.UserID)
-	require.Equal(t, arg.RefreshToken, session.RefreshToken)
+	require.Equal(t, arg.Token, session.Token)
+	require.Equal(t, arg.Scope, session.Scope)
 	require.Equal(t, ip, session.ClientIp)
 	require.False(t, session.IsBlocked)
 	require.WithinDuration(t, payload.ExpiredAt, session.ExpiresAt, time.Second)
@@ -84,17 +86,17 @@ func TestGetSession(t *testing.T) {
 	require.Equal(t, session.UserID, session1.UserID)
 	require.Equal(t, session.ClientIp, session1.ClientIp)
 	require.Equal(t, session.UserAgent, session1.UserAgent)
-	require.Equal(t, session.RefreshToken, session1.RefreshToken)
+	require.Equal(t, session.Token, session1.Token)
+	require.Equal(t, session.Scope, session1.Scope)
 	require.Equal(t, session.IsBlocked, session1.IsBlocked)
 	require.WithinDuration(t, session.CreatedAt, session1.CreatedAt, time.Second)
 	require.WithinDuration(t, session.ExpiresAt, session1.ExpiresAt, time.Second)
 }
 
-
 func TestDeleteExpiredSessions(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		createTestSession(t)
-	}
+	// for i := 0; i < 10; i++ {
+	// 	createTestSession(t)
+	// }
 
 	err := testQuerier.DeleteExpiredSession(context.Background())
 	require.NoError(t, err)

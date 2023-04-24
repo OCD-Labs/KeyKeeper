@@ -7,11 +7,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 
 	"github.com/OCD-Labs/KeyKeeper/api"
 	db "github.com/OCD-Labs/KeyKeeper/db/sqlc"
-	"github.com/OCD-Labs/KeyKeeper/internal/util"
+	"github.com/OCD-Labs/KeyKeeper/internal/mailer"
+	"github.com/OCD-Labs/KeyKeeper/internal/token"
+	"github.com/OCD-Labs/KeyKeeper/internal/utils"
+	"github.com/OCD-Labs/KeyKeeper/internal/worker"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 )
@@ -20,7 +24,7 @@ import (
 var swaggerDocs embed.FS
 
 func main() {
-	configs, err := util.ParseConfigs("./")
+	configs, err := utils.ParseConfigs("./")
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to parse configurations")
 	}
@@ -28,7 +32,7 @@ func main() {
 	if configs.Env == "development" {
 		log.Logger = log.Output(
 			zerolog.ConsoleWriter{
-				Out: os.Stderr, 
+				Out:        os.Stderr,
 				TimeFormat: time.RFC3339,
 			},
 		).With().Caller().Logger()
@@ -39,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to DB")
 	}
-	store := db.New(dbConn)
+	store := db.NewStore(dbConn)
 
 	// Retrieve the swagger-ui files.
 	swaggerFiles, err := fs.Sub(swaggerDocs, "docs/swagger")
@@ -47,15 +51,35 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to get subcontent from swaggerDocs")
 	}
 
-	log.Info().Msg("setting up application")
-	app, err := api.NewServer(configs, store, swaggerFiles, log.Logger)
+	tokenMaker, err := token.NewPasetoMaker(configs.SymmetricKey)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed setting up application")
+		log.Fatal().Err(err).Msg("failed to setup tokeMaker")
 	}
 
-	log.Info().Msg("starting/stopping server")
+	redisOpt := asynq.RedisClientOpt{
+		Addr: configs.RedisAddress,
+	}
+	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
+
+	log.Info().Msg("setting up application")
+	app := api.NewServer(configs, store, swaggerFiles, log.Logger, tokenMaker, taskDistributor)
+
+	log.Info().Msg("starting redis server")
+	go runTaskProcessor(configs, redisOpt, store, tokenMaker)
+
+	log.Info().Msg("starting/stopping service")
 	err = app.Start()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed starting/stopping server")
+	}
+}
+
+func runTaskProcessor(config utils.Configs, redisOpt asynq.RedisClientOpt, store db.Store, tokenMaker token.TokenMaker) {
+	mailer := mailer.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store, mailer, config, tokenMaker)
+	log.Info().Msg("starting task processor")
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to start task processor")
 	}
 }

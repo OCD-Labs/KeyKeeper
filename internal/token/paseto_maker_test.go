@@ -4,16 +4,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/OCD-Labs/KeyKeeper/internal/util"
+	"github.com/OCD-Labs/KeyKeeper/internal/utils"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPasetoMaker(t *testing.T) {
-	maker, err := NewPasetoMaker(util.RandomString(32))
+	maker, err := NewPasetoMaker(utils.RandomString(32))
 	require.NoError(t, err)
 
 	duration := time.Minute
-	userID := util.RandomNumber(1, 10)
+	userID := utils.RandomNumber(1, 10)
 
 	issuedAt := time.Now()
 	expiredAt := time.Now().Add(duration)
@@ -34,10 +34,10 @@ func TestPasetoMaker(t *testing.T) {
 }
 
 func TestExpiredToken(t *testing.T) {
-	maker, err := NewPasetoMaker(util.RandomString(32))
+	maker, err := NewPasetoMaker(utils.RandomString(32))
 	require.NoError(t, err)
 
-	token, payload, err := maker.CreateToken(-time.Minute, util.RandomNumber(1, 10))
+	token, payload, err := maker.CreateToken(-time.Minute, utils.RandomNumber(1, 10))
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	require.NotEmpty(t, payload)
