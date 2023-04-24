@@ -1,3 +1,4 @@
 DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS reminders;
 DROP TABLE IF EXISTS users;
+DROP FUNCTION IF EXISTS delete_expired_sessions();

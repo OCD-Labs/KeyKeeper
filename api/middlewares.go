@@ -12,17 +12,17 @@ import (
 type ResponseRecorder struct {
 	http.ResponseWriter
 	StatusCode int
-	Body []byte
+	Body       []byte
 }
 
-// Write capture the response status code as it's being 
+// Write capture the response status code as it's being
 // written by the next handler.
 func (rec *ResponseRecorder) WriteHeader(statusCode int) {
 	rec.StatusCode = statusCode
 	rec.ResponseWriter.WriteHeader(statusCode)
 }
 
-// Write capture the response body as it's being written 
+// Write capture the response body as it's being written
 // by the next handler
 func (rec *ResponseRecorder) Write(body []byte) (int, error) {
 	rec.Body = body
@@ -35,7 +35,7 @@ func (app *KeyKeeper) httpLogger(next http.Handler) http.Handler {
 
 		rec := &ResponseRecorder{
 			ResponseWriter: w,
-			StatusCode: http.StatusOK,
+			StatusCode:     http.StatusOK,
 		}
 
 		next.ServeHTTP(rec, r)

@@ -14,46 +14,48 @@ import (
 
 	db "github.com/OCD-Labs/KeyKeeper/db/sqlc"
 	"github.com/OCD-Labs/KeyKeeper/internal/token"
-	"github.com/OCD-Labs/KeyKeeper/internal/util"
+	"github.com/OCD-Labs/KeyKeeper/internal/utils"
+	"github.com/OCD-Labs/KeyKeeper/internal/worker"
 	"github.com/rs/zerolog"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 // KeyKeeper is the application, holds the necessary dependencies.
-type KeyKeeper struct{
-	configs util.Configs
-	store db.Querier
-	tokenMaker token.TokenMaker
-	swaggerUI fs.FS
-	router http.Handler
-	logger zerolog.Logger
-	wg sync.WaitGroup
+type KeyKeeper struct {
+	configs         utils.Configs
+	store           db.Store
+	tokenMaker      token.TokenMaker
+	swaggerUI       fs.FS
+	router          http.Handler
+	logger          zerolog.Logger
+	wg              sync.WaitGroup
+	taskDistributor worker.TaskDistributor
 }
 
-// NewServer setups a KeyKeeper object, and the application 
+type envelop map[string]interface{}
+
+// NewServer setups a KeyKeeper object, and the application
 // routes.
 func NewServer(
-	configs util.Configs, 
-	store db.Querier, 
+	configs utils.Configs,
+	store db.Store,
 	swaggerFiles fs.FS,
 	logger zerolog.Logger,
-) (*KeyKeeper, error) {
-	tokenMaker, err := token.NewPasetoMaker(configs.SymmetricKey)
-	if err != nil {
-		return nil, err
-	}
-
+	tokenMaker token.TokenMaker,
+	taskDistributor worker.TaskDistributor,
+) *KeyKeeper {
 	server := &KeyKeeper{
-		configs: configs,
-		store: store,
-		tokenMaker: tokenMaker,
-		swaggerUI: swaggerFiles,
-		logger: logger,
+		configs:         configs,
+		store:           store,
+		tokenMaker:      tokenMaker,
+		swaggerUI:       swaggerFiles,
+		logger:          logger,
+		taskDistributor: taskDistributor,
 	}
 	server.setupRoutes()
 
-	return server, nil
+	return server
 }
 
 func (app *KeyKeeper) setupRoutes() {
@@ -62,12 +64,13 @@ func (app *KeyKeeper) setupRoutes() {
 	fsysHandler := http.FileServer(http.FS(app.swaggerUI))
 	mux.Handler(http.MethodGet, "/api/v1/swagger/*any", http.StripPrefix("/api/v1/swagger/", fsysHandler))
 
-	mux.GET("/api/v1/healthcheck", app.ping)
+	mux.HandlerFunc(http.MethodGet, "/api/v1/healthcheck", app.ping)
+	mux.HandlerFunc(http.MethodPost, "/api/v1/users", app.createUser)
 
 	app.router = app.httpLogger(mux)
 }
 
-// Start setup amd starts a server. 
+// Start setup amd starts a server.
 func (app *KeyKeeper) Start() error {
 	server := &http.Server{
 		Addr:         app.configs.ServerAddress,
@@ -89,7 +92,7 @@ func (app *KeyKeeper) Start() error {
 
 		app.logger.Info().
 			Str("signal", s.String()).
-			Msg("shutting down server") 
+			Msg("shutting down server")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -101,16 +104,16 @@ func (app *KeyKeeper) Start() error {
 
 		app.logger.Info().
 			Str("addr", server.Addr).
-			Msg("completing background tasks") 
+			Msg("completing background tasks")
 
 		app.wg.Wait()
 		shutdownErr <- nil
 	}()
 
 	app.logger.Info().
-			Str("environment", app.configs.Env).
-			Str("addr", server.Addr).
-			Msg("starting server")
+		Str("environment", app.configs.Env).
+		Str("addr", server.Addr).
+		Msg("starting server")
 
 	err := server.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
@@ -123,8 +126,8 @@ func (app *KeyKeeper) Start() error {
 	}
 
 	app.logger.Info().
-			Str("addr", server.Addr).
-			Msg("server stopped") 
+		Str("addr", server.Addr).
+		Msg("server stopped")
 
 	return nil
 }

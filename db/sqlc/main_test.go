@@ -6,14 +6,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/OCD-Labs/KeyKeeper/internal/util"
+	"github.com/OCD-Labs/KeyKeeper/internal/utils"
 	_ "github.com/lib/pq"
 )
 
 var testQuerier Querier
 
 func TestMain(m *testing.M) {
-	config, err := util.ParseConfigs("../..")
+	config, err := utils.ParseConfigs("../..")
 	if err != nil {
 		log.Fatalf("cannot parse configs: %v", err)
 	}

@@ -13,7 +13,8 @@ CREATE TABLE "users" (
 CREATE TABLE "sessions" (
   "id" uuid PRIMARY KEY,
   "user_id" bigint NOT NULL,
-  "refresh_token" varchar NOT NULL,
+  "token" varchar NOT NULL,
+  "scope" varchar NOT NULL,
   "user_agent" varchar NOT NULL,
   "client_ip" varchar NOT NULL,
   "is_blocked" boolean NOT NULL DEFAULT false,

@@ -6,6 +6,9 @@ migration_file:
 sqlc:
 	sqlc generate
 
+server:
+	go run main.go
+
 postgres:
 	docker run --name key_keeper_db -p 5433:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:15.2-alpine
 

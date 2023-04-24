@@ -9,6 +9,7 @@ info:
 host: "keykeeper.onrender.com"
 basePath: "/api/v1"
 schemes:
+  - "http"
   - "https"
 consumes:
   - "application/json"
@@ -52,7 +53,10 @@ paths:
         201: 
           description: "Created"
           schema:
-            $ref: "#/definitions/Reminder"
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/Reminder"
         400:
           description: "Bad request"
           schema:
@@ -76,7 +80,10 @@ paths:
         200:
           description: "OK"
           schema:
-            $ref: "#/definitions/Reminder"
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/Reminder"
         404:
           description: "Not found"
           schema:
@@ -130,7 +137,10 @@ paths:
         200:
           description: "OK"
           schema:
-            $ref: "#/definitions/Reminder"
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/Reminder"
         400:
           description: "Bad request"
           schema:
@@ -159,7 +169,10 @@ paths:
         200:
           description: "OK"
           schema:
-            $ref: "#/definitions/Reminder"
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/Reminder"
         400:
           description: "Bad request"
           schema:
@@ -189,7 +202,10 @@ paths:
         200:
           description: "OK"
           schema:
-            $ref: "#/definitions/Reminder"
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/Reminder"
         400:
           description: "Bad request"
           schema:
@@ -210,7 +226,7 @@ paths:
       parameters:
         - name: "user"
           in: "body"
-          description: "CreateUser object"
+          description: "create user JSON"
           required: true
           schema:
             $ref: "#/definitions/CreateUser"
@@ -218,9 +234,16 @@ paths:
         201:
           description: "Created"
           schema:
-            $ref: "#/definitions/User"
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/User"
         400:
           description: "Bad request"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        403:
+          description: "Forbidden"
           schema:
             $ref: "#/definitions/ErrorResponse"
         500:
@@ -240,7 +263,10 @@ paths:
         200:
           description: "OK"
           schema:
-            $ref: "#/definitions/User"
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/User"
         400:
           description: "Bad request"
           schema:
@@ -274,7 +300,10 @@ paths:
         200:
           description: "OK"
           schema:
-            $ref: "#/definitions/User"
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/User"
         400:
           description: "Bad request"
           schema:
@@ -372,6 +401,11 @@ paths:
       responses:
         200:
           description: "OK"
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/User"
         400:
           description: "Bad request"
           schema:
@@ -409,7 +443,7 @@ paths:
       summary: "Initiate Google Sign-In"
       description: "Initiate Google Sign-In flow by redirecting the user to Google authorization endpoint"
       responses:
-        '307':
+        307:
           description: "Temporary Redirect"
           headers:
             Location:
@@ -431,59 +465,38 @@ paths:
           required: true
           description: "A value passed by the client which is returned unchanged in the response"
       responses:
-        '200':
+        200:
           description: "Success"
           schema:
-            $ref: "#/definitions/LoginResponse"
-        '400':
+            type: object
+            properties:
+              data:
+                $ref: "#/definitions/User"
+        400:
           description: "Bad Request"
           schema:
             $ref: "#/definitions/ErrorResponse"
-        '401':
+        401:
           description: "Unauthorized"
           schema:
             $ref: "#/definitions/ErrorResponse"
-        '404':
+        404:
           description: "Not Found"
           schema:
             $ref: "#/definitions/ErrorResponse"
-        '500':
+        500:
           description: "Internal Server Error"
           schema:
             $ref: "#/definitions/ErrorResponse"
 definitions:
-  LoginResponse:
-    type: object
-    properties:
-      data:
-        type: object
-        properties:
-          token:
-            type: string
-          payload:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              user_id:
-                type: string
-              user_role:
-                type: string
-              issued_at:
-                type: string
-                format: date-time
-              expired_at:
-                type: string
-                format: date-time
-          user:
-            $ref: "#/definitions/User"
   User:
     type: "object"
     properties:
-      id:
+      user_id:
         type: "integer"
-      full_name:
+      first_name:
+        type: "string"
+      last_name:
         type: "string"
       email:
         type: "string"
@@ -513,6 +526,7 @@ definitions:
         format: password
         minLength: 8
         maxLength: 20
+
   Reminder:
     type: "object"
     properties:
@@ -547,8 +561,6 @@ definitions:
     type: "object"
     properties:
       error:
-        type: "string"
-      message:
         type: "string"
   Credentials:
     type: "object"

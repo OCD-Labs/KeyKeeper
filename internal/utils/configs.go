@@ -1,4 +1,4 @@
-package util
+package utils
 
 import (
 	"time"
@@ -14,6 +14,10 @@ type Configs struct {
 	ServerAddress        string        `mapstructure:"SERVER_ADDRESS"`
 	SymmetricKey         string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	SessionTokenDuration time.Duration `mapstructure:"SESSION_TOKEN_DURATION"`
+	EmailSenderName      string        `mapstructure:"EMAIL_SENDER_NAME"`
+	EmailSenderAddress   string        `mapstructure:"EMAIL_SENDER_ADDRESS"`
+	EmailSenderPassword  string        `mapstructure:"EMAIL_SENDER_PASSWORD"`
+	RedisAddress         string        `mapstructure:"REDIS_ADDRESS"`
 }
 
 // ParseConfigs parses the configuration files.

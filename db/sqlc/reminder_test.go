@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/OCD-Labs/KeyKeeper/internal/util"
+	"github.com/OCD-Labs/KeyKeeper/internal/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/tabbed/pqtype"
 )
@@ -32,11 +32,11 @@ func createTestReminder(t *testing.T, userID int64) Reminder {
 	// Define arguments for creating a reminder
 	arg := CreateReminderParams{
 		UserID:     userID,
-		WebsiteUrl: util.RandomWebsiteURL(),
+		WebsiteUrl: utils.RandomWebsiteURL(),
 		Interval:   "2 weeks",
-		Extension:  pqtype.NullRawMessage{
+		Extension: pqtype.NullRawMessage{
 			RawMessage: buf,
-			Valid: true,
+			Valid:      true,
 		},
 	}
 
@@ -198,11 +198,11 @@ func TestUpdateReminderConfigs(t *testing.T) {
 
 	// Set the reminder configurations.
 	reminder1, err := testQuerier.SetReminderConfigs(context.Background(), SetReminderConfigsParams{
-		ID:               reminder.ID,
-		WebsiteUrl:       reminder.WebsiteUrl,
+		ID:         reminder.ID,
+		WebsiteUrl: reminder.WebsiteUrl,
 		UpdatedExtension: pqtype.NullRawMessage{
 			RawMessage: buf,
-			Valid: true,
+			Valid:      true,
 		},
 	})
 	require.NoError(t, err)

@@ -16,31 +16,34 @@ const createSession = `-- name: CreateSession :one
 INSERT INTO sessions (
   id,
   user_id,
-  refresh_token,
+  token,
+  scope,
   user_agent,
   client_ip,
   is_blocked,
   expires_at
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, user_id, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at
+  $1, $2, $3, $4, $5, $6, $7, $8
+) RETURNING id, user_id, token, scope, user_agent, client_ip, is_blocked, expires_at, created_at
 `
 
 type CreateSessionParams struct {
-	ID           uuid.UUID `json:"id"`
-	UserID       int64     `json:"user_id"`
-	RefreshToken string    `json:"refresh_token"`
-	UserAgent    string    `json:"user_agent"`
-	ClientIp     string    `json:"client_ip"`
-	IsBlocked    bool      `json:"is_blocked"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	ID        uuid.UUID `json:"id"`
+	UserID    int64     `json:"user_id"`
+	Token     string    `json:"token"`
+	Scope     string    `json:"scope"`
+	UserAgent string    `json:"user_agent"`
+	ClientIp  string    `json:"client_ip"`
+	IsBlocked bool      `json:"is_blocked"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
 	row := q.db.QueryRowContext(ctx, createSession,
 		arg.ID,
 		arg.UserID,
-		arg.RefreshToken,
+		arg.Token,
+		arg.Scope,
 		arg.UserAgent,
 		arg.ClientIp,
 		arg.IsBlocked,
@@ -50,7 +53,8 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.RefreshToken,
+		&i.Token,
+		&i.Scope,
 		&i.UserAgent,
 		&i.ClientIp,
 		&i.IsBlocked,
@@ -70,7 +74,7 @@ func (q *Queries) DeleteExpiredSession(ctx context.Context) error {
 }
 
 const getSession = `-- name: GetSession :one
-SELECT id, user_id, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at FROM sessions
+SELECT id, user_id, token, scope, user_agent, client_ip, is_blocked, expires_at, created_at FROM sessions
 WHERE id = $1 LIMIT 1
 `
 
@@ -80,7 +84,8 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.RefreshToken,
+		&i.Token,
+		&i.Scope,
 		&i.UserAgent,
 		&i.ClientIp,
 		&i.IsBlocked,
