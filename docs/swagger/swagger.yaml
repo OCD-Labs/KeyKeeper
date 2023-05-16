@@ -6,8 +6,8 @@ info:
   With this service, users can receive reminder updates about their passwords for specific websites, which can help to increase their password security. For example, users can receive reminders to change their passwords every 90 days or whenever there is a data breach at a website where they have an account.
   The aim is to reduce the risk of security breaches due to weak or compromised passwords."
   version: "1.0.0"
-# host: "keykeeper.onrender.com"
-host: "localhost:8081"
+host: "keykeeper.onrender.com"
+# host: "localhost:8081"
 basePath: "/api/v1"
 schemes:
   - "https"
