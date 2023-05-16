@@ -94,7 +94,7 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(
 	}
 
 	verifyURL := fmt.Sprintf(
-		"https://%s/v1/verify_email?email=%s&secret_code=%s",
+		"https://%s/api/v1/verify_email?email=%s&secret_code=%s",
 		processor.configs.APIHost,
 		user.Email,
 		verifyEmailSession.Token,
