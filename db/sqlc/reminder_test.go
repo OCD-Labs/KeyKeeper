@@ -33,7 +33,7 @@ func createTestReminder(t *testing.T, userID int64) Reminder {
 	arg := CreateReminderParams{
 		UserID:     userID,
 		WebsiteUrl: utils.RandomWebsiteURL(),
-		Interval:   "2 weeks",
+		Interval:   int64(2 *time.Hour * 24 * 7),
 		Extension: pqtype.NullRawMessage{
 			RawMessage: buf,
 			Valid:      true,
@@ -83,14 +83,8 @@ func TestDeleteReminder(t *testing.T) {
 	err := testQuerier.DeleteReminder(context.Background(), arg)
 	require.NoError(t, err)
 
-	// Define arguments for the GetReminder function
-	arg1 := GetReminderParams{
-		ID:         reminder.ID,
-		WebsiteUrl: reminder.WebsiteUrl,
-	}
-
 	// Call the GetReminder function and check for errors
-	reminder1, err := testQuerier.GetReminder(context.Background(), arg1)
+	reminder1, err := testQuerier.GetReminder(context.Background(), reminder.ID)
 	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, reminder1) // Check that the reminder has been deleted
@@ -101,14 +95,8 @@ func TestGetReminder(t *testing.T) {
 	user := createTestUser(t)
 	reminder := createTestReminder(t, user.ID)
 
-	// Prepare the arguments to call GetReminder.
-	arg := GetReminderParams{
-		ID:         reminder.ID,
-		WebsiteUrl: reminder.WebsiteUrl,
-	}
-
 	// Call GetReminder and check for errors.
-	reminder1, err := testQuerier.GetReminder(context.Background(), arg)
+	reminder1, err := testQuerier.GetReminder(context.Background(), reminder.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, reminder1)
 
@@ -156,7 +144,7 @@ func TestSetNewInterval(t *testing.T) {
 
 	// Set the arguments for the SetNewInterval function.
 	arg := SetNewIntervalParams{
-		NewInterval: "1 month",
+		NewInterval: int64(time.Hour * 24 * 7),
 		ID:          reminder.ID,
 		WebsiteUrl:  reminder.WebsiteUrl,
 	}

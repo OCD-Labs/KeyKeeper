@@ -13,7 +13,7 @@ CREATE TABLE "users" (
 CREATE TABLE "sessions" (
   "id" uuid PRIMARY KEY,
   "user_id" bigint NOT NULL,
-  "token" varchar NOT NULL,
+  "token" varchar UNIQUE NOT NULL,
   "scope" varchar NOT NULL,
   "user_agent" varchar NOT NULL,
   "client_ip" varchar NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE "reminders" (
   "id" bigserial PRIMARY KEY,
   "user_id" bigint NOT NULL,
   "website_url" varchar NOT NULL,
-  "interval" varchar NOT NULL,
+  "interval" bigint NOT NULL,
   "updated_at" timestamptz NOT NULL DEFAULT (now()),
   "extension" jsonb
 );

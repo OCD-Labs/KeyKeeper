@@ -10,6 +10,30 @@ import (
 	"database/sql"
 )
 
+const activateUser = `-- name: ActivateUser :one
+UPDATE users
+SET is_active = true
+WHERE email = $1
+RETURNING id, full_name, hashed_password, email, profile_image_url, password_changed_at, created_at, is_active, is_email_verified
+`
+
+func (q *Queries) ActivateUser(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, activateUser, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.HashedPassword,
+		&i.Email,
+		&i.ProfileImageUrl,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.IsActive,
+		&i.IsEmailVerified,
+	)
+	return i, err
+}
+
 const changeEmail = `-- name: ChangeEmail :one
 UPDATE users
 SET email = $1
@@ -41,18 +65,18 @@ func (q *Queries) ChangeEmail(ctx context.Context, arg ChangeEmailParams) (User,
 
 const changePassword = `-- name: ChangePassword :one
 UPDATE users
-SET hashed_password = $1
-WHERE email = $2
+SET hashed_password = $1, password_changed_at = now()
+WHERE id = $2
 RETURNING id, full_name, hashed_password, email, profile_image_url, password_changed_at, created_at, is_active, is_email_verified
 `
 
 type ChangePasswordParams struct {
 	HashedPassword string `json:"hashed_password"`
-	Email          string `json:"email"`
+	ID             int64  `json:"id"`
 }
 
 func (q *Queries) ChangePassword(ctx context.Context, arg ChangePasswordParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, changePassword, arg.HashedPassword, arg.Email)
+	row := q.db.QueryRowContext(ctx, changePassword, arg.HashedPassword, arg.ID)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -173,6 +197,104 @@ WHERE id = $1 LIMIT 1
 
 func (q *Queries) GetUser(ctx context.Context, userID int64) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, userID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.HashedPassword,
+		&i.Email,
+		&i.ProfileImageUrl,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.IsActive,
+		&i.IsEmailVerified,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, full_name, hashed_password, email, profile_image_url, password_changed_at, created_at, is_active, is_email_verified FROM users
+WHERE email = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, userEmail string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, userEmail)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.HashedPassword,
+		&i.Email,
+		&i.ProfileImageUrl,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.IsActive,
+		&i.IsEmailVerified,
+	)
+	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET
+  hashed_password = COALESCE($1, hashed_password),
+  password_changed_at = COALESCE($2, password_changed_at),
+  full_name = COALESCE($3, full_name),
+  email = COALESCE($4, email),
+  is_email_verified = COALESCE($5, is_email_verified),
+  is_active = COALESCE($6, is_active),
+  profile_image_url = COALESCE($7, profile_image_url)
+WHERE 
+  id = $8 OR email = $4
+RETURNING id, full_name, hashed_password, email, profile_image_url, password_changed_at, created_at, is_active, is_email_verified
+`
+
+type UpdateUserParams struct {
+	HashedPassword    sql.NullString `json:"hashed_password"`
+	PasswordChangedAt sql.NullTime   `json:"password_changed_at"`
+	FullName          sql.NullString `json:"full_name"`
+	Email             sql.NullString `json:"email"`
+	IsEmailVerified   sql.NullBool   `json:"is_email_verified"`
+	IsActive          sql.NullBool   `json:"is_active"`
+	ProfileImageUrl   sql.NullString `json:"profile_image_url"`
+	ID                sql.NullInt64  `json:"id"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUser,
+		arg.HashedPassword,
+		arg.PasswordChangedAt,
+		arg.FullName,
+		arg.Email,
+		arg.IsEmailVerified,
+		arg.IsActive,
+		arg.ProfileImageUrl,
+		arg.ID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.HashedPassword,
+		&i.Email,
+		&i.ProfileImageUrl,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.IsActive,
+		&i.IsEmailVerified,
+	)
+	return i, err
+}
+
+const verifyEmail = `-- name: VerifyEmail :one
+UPDATE users
+SET is_email_verified = true, is_active = true
+WHERE email = $1
+RETURNING id, full_name, hashed_password, email, profile_image_url, password_changed_at, created_at, is_active, is_email_verified
+`
+
+func (q *Queries) VerifyEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, verifyEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,

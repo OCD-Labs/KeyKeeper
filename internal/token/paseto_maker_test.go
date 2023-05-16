@@ -1,6 +1,7 @@
 package token
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,7 +13,7 @@ func TestPasetoMaker(t *testing.T) {
 	maker, err := NewPasetoMaker(utils.RandomString(32))
 	require.NoError(t, err)
 
-	duration := time.Minute
+	duration := time.Hour
 	userID := utils.RandomNumber(1, 10)
 
 	issuedAt := time.Now()
@@ -23,7 +24,9 @@ func TestPasetoMaker(t *testing.T) {
 	require.NotEmpty(t, token)
 	require.NotEmpty(t, payload)
 
-	payload, err = maker.verifyToken(token)
+	fmt.Println(token)
+
+	payload, err = maker.VerifyToken(token)
 	require.NoError(t, err)
 	require.NotEmpty(t, payload)
 
@@ -42,7 +45,7 @@ func TestExpiredToken(t *testing.T) {
 	require.NotEmpty(t, token)
 	require.NotEmpty(t, payload)
 
-	payload, err = maker.verifyToken(token)
+	payload, err = maker.VerifyToken(token)
 	require.Error(t, err)
 	require.EqualError(t, err, ErrExpiredToken.Error())
 	require.Nil(t, payload)

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	db "github.com/OCD-Labs/KeyKeeper/db/sqlc"
+	"github.com/OCD-Labs/KeyKeeper/internal/utils"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
@@ -72,7 +73,7 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(
 		return err
 	}
 
-	token, Tokenpayload, err := processor.tokenMaker.CreateToken(25*time.Minute, user.ID)
+	token, tokenpayload, err := processor.tokenMaker.CreateToken(25*time.Minute, user.ID)
 	if err != nil {
 		return err
 	}
@@ -80,12 +81,12 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(
 	verifyEmailSession, err := processor.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:        uuid,
 		UserID:    user.ID,
-		Token:     token,
+		Token:     utils.Extract(token),
 		Scope:     "verify_email",
 		ClientIp:  payload.ClientIp,
 		UserAgent: payload.UserAgent,
 		IsBlocked: false,
-		ExpiresAt: Tokenpayload.ExpiredAt,
+		ExpiresAt: tokenpayload.ExpiredAt,
 	})
 	if err != nil {
 		werr := fmt.Errorf("failed to create verify email session: %s", err.Error())

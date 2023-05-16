@@ -16,5 +16,8 @@ INSERT INTO sessions (
 SELECT * FROM sessions
 WHERE id = $1 LIMIT 1;
 
+-- name: CheckSessionExistence :one
+SELECT EXISTS(SELECT 1 FROM sessions WHERE token = $1) AS session_exists;
+
 -- name: DeleteExpiredSession :exec
 SELECT delete_expired_sessions();

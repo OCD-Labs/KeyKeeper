@@ -12,6 +12,7 @@ import (
 
 	"github.com/OCD-Labs/KeyKeeper/api"
 	db "github.com/OCD-Labs/KeyKeeper/db/sqlc"
+	"github.com/OCD-Labs/KeyKeeper/internal/cache"
 	"github.com/OCD-Labs/KeyKeeper/internal/mailer"
 	"github.com/OCD-Labs/KeyKeeper/internal/token"
 	"github.com/OCD-Labs/KeyKeeper/internal/utils"
@@ -56,13 +57,19 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to setup tokeMaker")
 	}
 
+	cache, err := cache.NewRedisCache(configs.RedisAddress)
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot connect to redis cache")
+	}
+	log.Info().Msg("redis cache connection established")
+
 	redisOpt := asynq.RedisClientOpt{
 		Addr: configs.RedisAddress,
 	}
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
 	log.Info().Msg("setting up application")
-	app := api.NewServer(configs, store, swaggerFiles, log.Logger, tokenMaker, taskDistributor)
+	app := api.NewServer(configs, store, swaggerFiles, log.Logger, tokenMaker, taskDistributor, cache)
 
 	log.Info().Msg("starting redis server")
 	go runTaskProcessor(configs, redisOpt, store, tokenMaker)

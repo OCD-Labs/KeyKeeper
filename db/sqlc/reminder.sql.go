@@ -26,7 +26,7 @@ INSERT INTO reminders (
 type CreateReminderParams struct {
 	UserID     int64                 `json:"user_id"`
 	WebsiteUrl string                `json:"website_url"`
-	Interval   string                `json:"interval"`
+	Interval   int64                 `json:"interval"`
 	Extension  pqtype.NullRawMessage `json:"extension"`
 }
 
@@ -66,17 +66,12 @@ func (q *Queries) DeleteReminder(ctx context.Context, arg DeleteReminderParams) 
 
 const getReminder = `-- name: GetReminder :one
 SELECT id, user_id, website_url, interval, updated_at, extension FROM reminders
-WHERE id = $1 AND website_url = $2
+WHERE id = $1
 LIMIT 1
 `
 
-type GetReminderParams struct {
-	ID         int64  `json:"id"`
-	WebsiteUrl string `json:"website_url"`
-}
-
-func (q *Queries) GetReminder(ctx context.Context, arg GetReminderParams) (Reminder, error) {
-	row := q.db.QueryRowContext(ctx, getReminder, arg.ID, arg.WebsiteUrl)
+func (q *Queries) GetReminder(ctx context.Context, id int64) (Reminder, error) {
+	row := q.db.QueryRowContext(ctx, getReminder, id)
 	var i Reminder
 	err := row.Scan(
 		&i.ID,
@@ -159,7 +154,7 @@ RETURNING id, user_id, website_url, interval, updated_at, extension
 `
 
 type SetNewIntervalParams struct {
-	NewInterval string `json:"new_interval"`
+	NewInterval int64  `json:"new_interval"`
 	ID          int64  `json:"id"`
 	WebsiteUrl  string `json:"website_url"`
 }

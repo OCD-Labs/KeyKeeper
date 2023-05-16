@@ -13,10 +13,13 @@ import (
 	"time"
 
 	db "github.com/OCD-Labs/KeyKeeper/db/sqlc"
+	"github.com/OCD-Labs/KeyKeeper/internal/cache"
 	"github.com/OCD-Labs/KeyKeeper/internal/token"
 	"github.com/OCD-Labs/KeyKeeper/internal/utils"
 	"github.com/OCD-Labs/KeyKeeper/internal/worker"
 	"github.com/rs/zerolog"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -31,6 +34,8 @@ type KeyKeeper struct {
 	logger          zerolog.Logger
 	wg              sync.WaitGroup
 	taskDistributor worker.TaskDistributor
+	googleConfig    *oauth2.Config
+	cache           cache.Cache
 }
 
 type envelop map[string]interface{}
@@ -44,7 +49,20 @@ func NewServer(
 	logger zerolog.Logger,
 	tokenMaker token.TokenMaker,
 	taskDistributor worker.TaskDistributor,
+	cache cache.Cache,
 ) *KeyKeeper {
+
+	googleConfig := &oauth2.Config{
+		Endpoint:     google.Endpoint,
+		RedirectURL:  configs.GoogleRedirectURL,
+		ClientID:     configs.GoogleClientID,
+		ClientSecret: configs.GoogleClientSecret,
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/userinfo.profile",
+		},
+	}
+
 	server := &KeyKeeper{
 		configs:         configs,
 		store:           store,
@@ -52,6 +70,8 @@ func NewServer(
 		swaggerUI:       swaggerFiles,
 		logger:          logger,
 		taskDistributor: taskDistributor,
+		cache:           cache,
+		googleConfig:    googleConfig,
 	}
 	server.setupRoutes()
 
@@ -66,8 +86,24 @@ func (app *KeyKeeper) setupRoutes() {
 
 	mux.HandlerFunc(http.MethodGet, "/api/v1/healthcheck", app.ping)
 	mux.HandlerFunc(http.MethodPost, "/api/v1/users", app.createUser)
+	mux.HandlerFunc(http.MethodPatch, "/api/v1/verify_email", app.verifyEmail)
+	mux.HandlerFunc(http.MethodGet, "/api/v1/auth/login", app.login)
+	mux.HandlerFunc(http.MethodGet, "/api/v1/auth/google/login", app.googleLogin)
+	mux.HandlerFunc(http.MethodGet, "/api/v1/auth/google/callback", app.googleLoginCallback)
+	mux.HandlerFunc(http.MethodPost, "/api/v1/resend_email_verification", app.resendVerifyEmail)
+	mux.HandlerFunc(http.MethodPost, "/api/v1/forgot_password", app.forgotPassword)
+	mux.HandlerFunc(http.MethodPatch, "/api/v1/reset_password", app.resetUserPassword)
 
-	app.router = app.httpLogger(mux)
+	mux.Handler(http.MethodPost, "/api/v1/auth/logout", app.authenticate(http.HandlerFunc(app.logout)))
+	mux.Handler(http.MethodPatch, "/api/v1/users/:id/deactivate", app.authenticate(http.HandlerFunc(app.deactivateUser)))
+	mux.Handler(http.MethodPatch, "/api/v1/users/:id/change_password", app.authenticate(http.HandlerFunc(app.changeUserPassword)))
+	mux.Handler(http.MethodGet, "/api/v1/users/:id", app.authenticate(http.HandlerFunc(app.getUser)))
+
+	mux.Handler(http.MethodPost, "/api/v1/reminders", app.authenticate(http.HandlerFunc(app.createReminder)))
+	mux.Handler(http.MethodGet, "/api/v1/reminders/:id", app.authenticate(http.HandlerFunc(app.getReminder)))
+	mux.Handler(http.MethodGet, "/api/v1/reminders", app.authenticate(http.HandlerFunc(app.listReminders)))
+
+	app.router = app.recoverPanic(app.enableCORS(app.httpLogger(mux)))
 }
 
 // Start setup amd starts a server.
@@ -109,6 +145,8 @@ func (app *KeyKeeper) Start() error {
 		app.wg.Wait()
 		shutdownErr <- nil
 	}()
+
+	app.startSessionCleanupJob()
 
 	app.logger.Info().
 		Str("environment", app.configs.Env).

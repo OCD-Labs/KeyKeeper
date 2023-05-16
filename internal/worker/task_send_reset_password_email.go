@@ -20,7 +20,6 @@ const (
 // PayloadResetPasswordEmail provides the userEmail.
 type PayloadSendResetPasswordEmail struct {
 	SessionID uuid.UUID `json:"payload_id"`
-	UserID    int64     `json:"user_id"`
 	UserEmail string    `json:"user_email"`
 }
 
@@ -67,9 +66,8 @@ func (processor *RedisTaskProcessor) ProcessTaskSendResetPasswordEmail(
 	}
 
 	resetPasswordURL := fmt.Sprintf(
-		"https://%s/api/v1/reset_password?user_id=%d&reset_token=%s",
+		"https://%s/api/v1/reset_password?reset_token=%s",
 		processor.configs.ServerAddress,
-		resetPassword.UserID,
 		resetPassword.Token,
 	)
 	subject := "Reset password instructions"

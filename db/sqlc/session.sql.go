@@ -12,6 +12,17 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkSessionExistence = `-- name: CheckSessionExistence :one
+SELECT EXISTS(SELECT 1 FROM sessions WHERE token = $1) AS session_exists
+`
+
+func (q *Queries) CheckSessionExistence(ctx context.Context, token string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkSessionExistence, token)
+	var session_exists bool
+	err := row.Scan(&session_exists)
+	return session_exists, err
+}
+
 const createSession = `-- name: CreateSession :one
 INSERT INTO sessions (
   id,

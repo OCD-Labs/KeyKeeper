@@ -37,7 +37,7 @@ RETURNING *;
 
 -- name: GetReminder :one
 SELECT * FROM reminders
-WHERE id = $1 AND website_url = $2
+WHERE id = $1
 LIMIT 1;
 
 -- name: ListReminders :many

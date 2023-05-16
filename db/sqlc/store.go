@@ -4,13 +4,25 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
+	"github.com/OCD-Labs/KeyKeeper/internal/pagination"
 )
+
+var (
+	AnonymousUser = &User{}
+)
+
+// IsAnonymous checks if a User instance is the AnonymousUser.
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
+}
 
 // Store provides all functions to execute db queries
 // and transactions.
 type Store interface {
 	Querier
 	CreateUserTx(ctx context.Context, arg CreateUserTxParams) (CreateUserTxResult, error)
+	ListRemindersX(ctx context.Context, arg ListRemindersParamsX) ([]Reminder, pagination.Metadata, error)
 }
 
 // A SQLStore provides all functions to execute SQL queries and transactions.
@@ -44,3 +56,6 @@ func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) erro
 
 	return tx.Commit()
 }
+
+
+
