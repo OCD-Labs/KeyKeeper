@@ -12,23 +12,28 @@ import (
 )
 
 type Querier interface {
+	ActivateUser(ctx context.Context, email string) (User, error)
 	ChangeEmail(ctx context.Context, arg ChangeEmailParams) (User, error)
 	ChangePassword(ctx context.Context, arg ChangePasswordParams) (User, error)
 	ChangeProfileImage(ctx context.Context, arg ChangeProfileImageParams) (User, error)
+	CheckSessionExistence(ctx context.Context, token string) (bool, error)
 	CreateReminder(ctx context.Context, arg CreateReminderParams) (Reminder, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeactivateUser(ctx context.Context, arg DeactivateUserParams) (User, error)
 	DeleteExpiredSession(ctx context.Context) error
 	DeleteReminder(ctx context.Context, arg DeleteReminderParams) error
-	GetReminder(ctx context.Context, arg GetReminderParams) (Reminder, error)
+	GetReminder(ctx context.Context, id int64) (Reminder, error)
 	GetReminderConfigs(ctx context.Context, arg GetReminderConfigsParams) (pqtype.NullRawMessage, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUser(ctx context.Context, userID int64) (User, error)
+	GetUserByEmail(ctx context.Context, userEmail string) (User, error)
 	ListReminders(ctx context.Context, arg ListRemindersParams) ([]Reminder, error)
 	SetNewInterval(ctx context.Context, arg SetNewIntervalParams) (Reminder, error)
 	SetReminderConfigs(ctx context.Context, arg SetReminderConfigsParams) (Reminder, error)
 	UpdateReminder(ctx context.Context, arg UpdateReminderParams) (Reminder, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	VerifyEmail(ctx context.Context, email string) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

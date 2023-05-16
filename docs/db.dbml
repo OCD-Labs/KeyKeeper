@@ -33,7 +33,7 @@ Table reminders {
   id bigserial [pk]
   user_id bigint [ref: > U.id, not null]
   website_url varchar [not null]
-  interval varchar [not null]
+  interval bigint [not null]
   updated_at timestamptz [not null, default: `now()`]
   extension jsonb
 

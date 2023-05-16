@@ -19,6 +19,11 @@ type Configs struct {
 	EmailSenderPassword  string        `mapstructure:"EMAIL_SENDER_PASSWORD"`
 	RedisAddress         string        `mapstructure:"REDIS_ADDRESS"`
 	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
+	CorsTrustedOrigins   []string      `mapstructure:"CORS_TRUSTED_ORIGINS"`
+	GoogleClientID       string        `mapstructure:"GOOGLE_CLIENT_ID"`
+	GoogleClientSecret   string        `mapstructure:"GOOGLE_CLIENT_SECRET"`
+	GoogleRedirectURL    string        `mapstructure:"GOOGLE_REDIRECT_URL"`
+	GoogleRandomString   string        `mapstructure:"GOOGLE_RANDOM_STRING"`
 }
 
 // ParseConfigs parses the configuration files.

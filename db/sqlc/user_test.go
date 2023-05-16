@@ -92,7 +92,7 @@ func TestChangePassword(t *testing.T) {
 	// Set up parameters to change the test user password.
 	arg := ChangePasswordParams{
 		HashedPassword: utils.RandomPasswordHash(16),
-		Email:          user.Email,
+		ID:             user.ID,
 	}
 
 	// Change the user password and check for errors

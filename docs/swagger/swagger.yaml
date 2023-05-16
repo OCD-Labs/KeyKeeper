@@ -6,11 +6,12 @@ info:
   With this service, users can receive reminder updates about their passwords for specific websites, which can help to increase their password security. For example, users can receive reminders to change their passwords every 90 days or whenever there is a data breach at a website where they have an account.
   The aim is to reduce the risk of security breaches due to weak or compromised passwords."
   version: "1.0.0"
-host: "keykeeper.onrender.com"
+# host: "keykeeper.onrender.com"
+host: "localhost:8081"
 basePath: "/api/v1"
 schemes:
-  - "http"
   - "https"
+  - "http"
 consumes:
   - "application/json"
 produces:
@@ -24,6 +25,27 @@ paths:
   /reminders:
     get:
       summary: "Get all reminders"
+      parameters:
+        - name: "website_url"
+          in: query
+          description: "website url substring to search for"
+          schema:
+            type: string
+        - name: "page"
+          in: query
+          description: "what page offset to return"
+          schema:
+            type: integer
+        - name: "page_size"
+          in: query
+          description: "the amount of reminders to return"
+          schema:
+            type: integer
+        - name: "sort"
+          in: query
+          description: "what keyword to sort reminders by (use '-keyword' for descending)"
+          schema:
+            type: string
       responses:
         200:
           description: "OK"
@@ -40,6 +62,7 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
+
     post:
       summary: "Create a new reminder"
       parameters:
@@ -67,6 +90,7 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
+
   /reminders/{id}:
     get:
       summary: "Get a reminder by ID"
@@ -123,6 +147,7 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
+
   /reminders/{id}/interval:
     patch:
       summary: "Update a reminder's interval"
@@ -155,6 +180,7 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
+
   /reminders/{id}/updated-at:
     patch:
       summary: "Update a reminder's updated_at"
@@ -187,6 +213,7 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
+
   /reminders/{id}/extension:
     patch:
       summary: "Update a reminder's extension"
@@ -220,6 +247,7 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
+
   /users:
     post:
       summary: "Create a new user"
@@ -250,6 +278,7 @@ paths:
           description: "Internal server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
+
   /users/{id}:
     get:
       summary: "Get a user by ID"
@@ -281,21 +310,31 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
-  /users/{id}/deactivate:
+
     patch:
-      summary: "Deactivate a user"
+      summary: "Update a user by ID"
       parameters:
         - name: "id"
           in: "path"
-          description: "ID of the user to deactivate"
+          description: "User's ID"
           required: true
           type: "integer"
-        - name: "credentials"
-          in: "body"
-          description: "Email address and password of the user to authenticate"
+        - name: "new update for user profile"
+          in: body
+          description:
           required: true
           schema:
-            $ref: "#/definitions/Credentials"
+            type: object
+            properties:
+              first_name:
+                type: string
+              last_name:
+                type: string
+              profile_image_url:
+                type: string
+              email:
+                type: string
+                format: email
       responses:
         200:
           description: "OK"
@@ -318,62 +357,27 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
-  /users/{id}/reset-password:
-    post:
-      summary: "Reset a user's password"
-      parameters:
-        - name: "id"
-          in: "path"
-          description: "ID of the user to reset password"
-          required: true
-          type: "integer"
-        - name: "email"
-          in: "body"
-          description: "Email address to send reset token"
-          required: true
-          schema:
-            type: "object"
-            properties:
-              email:
-                type: "string"
-                format: "email"
-      responses:
-        200:
-          description: "OK"
-        400:
-          description: "Bad request"
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        404:
-          description: "Not found"
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        500:
-          description: "Internal server error"
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /users/{id}/change-password:
+
+  /users/{id}/deactivate:
     patch:
-      summary: "Update a user's password"
+      summary: "Deactivate a user"
       parameters:
         - name: "id"
           in: "path"
-          description: "ID of the user to update password"
+          description: "ID of the user to deactivate"
           required: true
           type: "integer"
-        - name: "password"
+        - name: "credentials"
           in: "body"
-          description: "User's new password to update"
+          description: "Email address and password of the user to deactivate"
           required: true
           schema:
-            type: "object"
-            properties:
-              password:
-                type: "string"
-                format: password
+            $ref: "#/definitions/Credentials"
       responses:
         200:
           description: "OK"
+          schema:
+            $ref: "#/definitions/ResultResponse"
         400:
           description: "Bad request"
           schema:
@@ -388,8 +392,60 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
+
+  /users/{id}/change_password:
+    patch:
+      summary: "Update a user's password"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "ID of the user to update password"
+          required: true
+          type: "integer"
+        - name: "new password credentials"
+          in: "body"
+          description: "User's new password to update"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              current_password:
+                type: string
+                format: password
+                minLength: 8
+                maxLength: 20
+              new_password:
+                type: string
+                format: password
+                minLength: 8
+                maxLength: 20
+              confirm_new_password:
+                type: string
+                format: password
+                minLength: 8
+                maxLength: 20
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/ResultResponse"
+        400:
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        404:
+          description: "Not found"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      security:
+        - Bearer: []
+
   /auth/login:
-    post:
+    get:
       summary: "Login a user"
       parameters:
         - name: "credentials"
@@ -418,12 +474,15 @@ paths:
           description: "Internal server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
+
   /auth/logout:
     post:
       summary: "Logout a user"
       responses:
         200:
           description: "OK"
+          schema:
+            $ref: "#/definitions/ResultResponse"
         400:
           description: "Bad request"
           schema:
@@ -438,32 +497,11 @@ paths:
             $ref: "#/definitions/ErrorResponse"
       security:
         - Bearer: []
+        
   /auth/google/login:
     get:
       summary: "Initiate Google Sign-In"
       description: "Initiate Google Sign-In flow by redirecting the user to Google authorization endpoint"
-      responses:
-        307:
-          description: "Temporary Redirect"
-          headers:
-            Location:
-              description: "URL to redirect the user to Google authorization endpoint"
-              schema:
-                type: "string"
-                example: "https://accounts.google.com/o/oauth2/auth"
-
-  /auth/google/callback:
-    get:
-      summary: "Google sign-in callback"
-      parameters:
-        - name: code
-          in: query
-          required: true
-          description: "The authorization code returned by Google after the user approves access"
-        - name: state
-          in: query
-          required: true
-          description: "A value passed by the client which is returned unchanged in the response"
       responses:
         200:
           description: "Success"
@@ -488,6 +526,105 @@ paths:
           description: "Internal Server Error"
           schema:
             $ref: "#/definitions/ErrorResponse"
+
+  /forgot_password:
+    post:
+      summary: "Initial forgot passsword workflow"
+      parameters:
+        - name: "email address"
+          in: "body"
+          description: "Email address to send reset token"
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/ResultResponse"
+        400:
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        404:
+          description: "Not found"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /reset_password:
+    patch:
+      summary: "Reset a user's password"
+      parameters:
+        - name: "reset_token"
+          in: query
+          description: "reset token for authenticating the reset password request"
+          required: true
+          type: string
+        - name: "new password credentials"
+          in: "body"
+          description: "New and confirm passwords"
+          required: true
+          schema:
+            type: object
+            properties:
+              new_password:
+                type: string
+                format: password
+                minLength: 8
+                maxLength: 20
+              confirm_new_password:
+                type: string
+                format: password
+                minLength: 8
+                maxLength: 20
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/ResultResponse"
+        400:
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+  /verify_email:
+    patch:
+      summary: "Verify user email address"
+      parameters:
+        - name: "email"
+          in: query
+          description: "email address of the user"
+          required: true
+          type: string
+        - name: "secret_code"
+          in: query
+          description: "secret code sent to user's email"
+          required: true
+          type: string
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/ResultResponse"
+        400:
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
 definitions:
   User:
     type: "object"
@@ -501,11 +638,14 @@ definitions:
       email:
         type: "string"
         format: email
+      profile_image_url:
+        type: string
       created_at:
         type: "string"
         format: date-time
-      profile_image_url:
-        type: string
+      PasswordChangedAt:
+        type: "string"
+        format: date-time
       is_active:
         type: boolean
       is_email_verified:
@@ -545,23 +685,33 @@ definitions:
       Extension:
         type: object
         additionalProperties: true
+
   Interval:
     type: "object"
     properties:
       interval:
         type: "string"
         format: date-time
+
   UpdatedAt:
     type: "object"
     properties:
       interval:
         type: "string"
         format: date-time
+
   ErrorResponse:
     type: "object"
     properties:
       error:
         type: "string"
+
+  ResultResponse:
+    type: "object"
+    properties:
+      result:
+        type: "string"
+
   Credentials:
     type: "object"
     properties:

@@ -6,10 +6,26 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/rs/zerolog/log"
 )
+
+// retrieveIDParam returns the "id" URL parameter from the current request context,
+func (app *KeyKeeper) retrieveIDParam(r *http.Request) (int64, error) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
+
+	if err != nil || id < 1 {
+		return 0, errors.New("invalid id parameter")
+	}
+
+	return id, nil
+}
 
 // readJSON reads/parses request body.
 func (app *KeyKeeper) readJSON(w http.ResponseWriter, r *http.Request, input interface{}) error {
@@ -45,7 +61,7 @@ func (app *KeyKeeper) readJSON(w http.ResponseWriter, r *http.Request, input int
 			panic(err)
 		case strings.HasPrefix(err.Error(), "json: unknown field "):
 			field := strings.TrimPrefix(err.Error(), "json: unknown field ")
-			return fmt.Errorf("request body contains unknow field: %s", field)
+			return fmt.Errorf("request body contains unknown field: %s", field)
 		case err.Error() == "http: request body too large":
 			return fmt.Errorf("request body must not be larger than %d bytes", maxBytes)
 		default:
@@ -81,6 +97,14 @@ func (app *KeyKeeper) writeJSON(w http.ResponseWriter, statusCode int, data enve
 	return nil
 }
 
+func (app *KeyKeeper) readStr(fields url.Values, key string, defaultVal string) string {
+	val := fields.Get(key)
+	if val == "" {
+		return defaultVal
+	}
+	return val
+}
+
 // errorResponse writes error response.
 func (app *KeyKeeper) errorResponse(
 	w http.ResponseWriter,
@@ -97,4 +121,18 @@ func (app *KeyKeeper) errorResponse(
 			Msg("failed to write response body")
 		w.WriteHeader(500)
 	}
+}
+
+// readInt parses integer values provided through the query string
+func (app *KeyKeeper) readInt(queryStr url.Values, key string, defaultValue int) (int, error) {
+	str := queryStr.Get(key)
+	if str == "" {
+		return defaultValue, nil
+	}
+	intValue, err := strconv.Atoi(str)
+	if err != nil {
+		return defaultValue, err
+	}
+
+	return intValue, nil
 }
