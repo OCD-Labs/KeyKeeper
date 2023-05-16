@@ -33,7 +33,7 @@ func createTestReminder(t *testing.T, userID int64) Reminder {
 	arg := CreateReminderParams{
 		UserID:     userID,
 		WebsiteUrl: utils.RandomWebsiteURL(),
-		Interval:   int64(2 *time.Hour * 24 * 7),
+		Interval:   int64(2 * time.Hour * 24 * 7),
 		Extension: pqtype.NullRawMessage{
 			RawMessage: buf,
 			Valid:      true,

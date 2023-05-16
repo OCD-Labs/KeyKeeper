@@ -15,8 +15,8 @@ import (
 )
 
 type createReminderRequest struct {
-	WebsiteUrl string `json:"website_url" validate:"required"`
-	Interval types.Interval `json:"interval" vslidate:"required"`
+	WebsiteUrl string         `json:"website_url" validate:"required"`
+	Interval   types.Interval `json:"interval" vslidate:"required"`
 }
 
 type createReminderResponse struct {
@@ -42,7 +42,7 @@ func newReminderResponse(reminder db.Reminder) (*createReminderResponse, error) 
 	}
 
 	return &createReminderResponse{
-		Reminder: reminder,
+		Reminder:  reminder,
 		Extension: string(buf),
 	}, nil
 }
@@ -62,12 +62,12 @@ func (app *KeyKeeper) createReminder(w http.ResponseWriter, r *http.Request) {
 	authPayload := app.contextGetToken(r)
 
 	reminder, err := app.store.CreateReminder(r.Context(), db.CreateReminderParams{
-		UserID: authPayload.UserID,
+		UserID:     authPayload.UserID,
 		WebsiteUrl: req.WebsiteUrl,
-		Interval: int64(req.Interval),
+		Interval:   int64(req.Interval),
 		Extension: pqtype.NullRawMessage{
 			RawMessage: []byte(fmt.Sprintf(`{"get_email_notifications": %t}`, false)),
-			Valid: true,
+			Valid:      true,
 		},
 	})
 	if err != nil { // TODO: Handle error due to Postgres constraints
@@ -122,9 +122,9 @@ func (app *KeyKeeper) getReminder(w http.ResponseWriter, r *http.Request) {
 
 type listRemindersQueryStr struct {
 	WebsiteURL string `json:"website_url"`
-	Page int `json:"page" validate:"min=1,max=10000000"`
-	PageSize int `json:"page_size" validate:"min=1,max=20"`
-	Sort string `json:"sort"`
+	Page       int    `json:"page" validate:"min=1,max=10000000"`
+	PageSize   int    `json:"page_size" validate:"min=1,max=20"`
+	Sort       string `json:"sort"`
 }
 
 func (app *KeyKeeper) listReminders(w http.ResponseWriter, r *http.Request) {
@@ -144,9 +144,9 @@ func (app *KeyKeeper) listReminders(w http.ResponseWriter, r *http.Request) {
 	arg := db.ListRemindersParamsX{
 		WebsiteURL: reqQueryStr.WebsiteURL,
 		Filters: pagination.Filters{
-			Page: reqQueryStr.Page,
-			PageSize: reqQueryStr.PageSize,
-			Sort: reqQueryStr.Sort,
+			Page:         reqQueryStr.Page,
+			PageSize:     reqQueryStr.PageSize,
+			Sort:         reqQueryStr.Sort,
 			SortSafelist: []string{"id", "website_url", "interval", "updated_at", "-id", "-website_url", "-interval", "-updated_at"},
 		},
 	}

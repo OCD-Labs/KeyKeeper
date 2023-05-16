@@ -12,6 +12,7 @@ type Configs struct {
 	DBDriver             string        `mapstructure:"DB_DRIVER"`
 	DBSource             string        `mapstructure:"DB_SOURCE"`
 	ServerAddress        string        `mapstructure:"SERVER_ADDRESS"`
+	APIHost              string        `mapstructure:"API_HOST"`
 	SymmetricKey         string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	SessionTokenDuration time.Duration `mapstructure:"SESSION_TOKEN_DURATION"`
 	EmailSenderName      string        `mapstructure:"EMAIL_SENDER_NAME"`

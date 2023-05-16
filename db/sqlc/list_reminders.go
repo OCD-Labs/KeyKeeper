@@ -9,7 +9,7 @@ import (
 
 type ListRemindersParamsX struct {
 	WebsiteURL string
-	Filters pagination.Filters
+	Filters    pagination.Filters
 }
 
 // ListRemindersX do a fulltext search to list reminders, and paginates accordingly.
@@ -47,7 +47,7 @@ func (q *SQLStore) ListRemindersX(ctx context.Context, arg ListRemindersParamsX)
 		}
 		items = append(items, i)
 	}
-	
+
 	if err := rows.Err(); err != nil {
 		return nil, pagination.Metadata{}, err
 	}

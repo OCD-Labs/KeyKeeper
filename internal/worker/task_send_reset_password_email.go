@@ -67,7 +67,7 @@ func (processor *RedisTaskProcessor) ProcessTaskSendResetPasswordEmail(
 
 	resetPasswordURL := fmt.Sprintf(
 		"https://%s/api/v1/reset_password?reset_token=%s",
-		processor.configs.ServerAddress,
+		processor.configs.APIHost,
 		resetPassword.Token,
 	)
 	subject := "Reset password instructions"

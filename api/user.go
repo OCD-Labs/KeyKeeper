@@ -146,7 +146,7 @@ func (app *KeyKeeper) verifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenExists, err := app.store.CheckSessionExistence(r.Context(), req.SecretCode);
+	tokenExists, err := app.store.CheckSessionExistence(r.Context(), req.SecretCode)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusInternalServerError, "failed to check secret code")
 		log.Error().Err(err).Msg("error occurred")
@@ -179,18 +179,18 @@ func (app *KeyKeeper) verifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	arg := db.UpdateUserParams {
+	arg := db.UpdateUserParams{
 		IsEmailVerified: sql.NullBool{
-			Bool: true,
+			Bool:  true,
 			Valid: true,
 		},
 		IsActive: sql.NullBool{
-			Bool: true,
+			Bool:  true,
 			Valid: true,
 		},
 		Email: sql.NullString{
 			String: req.Email,
-			Valid: true,
+			Valid:  true,
 		},
 	}
 
@@ -441,7 +441,7 @@ func (app *KeyKeeper) googleLoginCallback(w http.ResponseWriter, r *http.Request
 }
 
 type deactivateUserRequest struct {
-	Email string `json:"email" validate:"required,email"`
+	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8"`
 }
 
@@ -497,16 +497,16 @@ func (app *KeyKeeper) deactivateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	arg := db.UpdateUserParams{
-		ID:    sql.NullInt64{
+		ID: sql.NullInt64{
 			Int64: authPayload.UserID,
 			Valid: true,
 		},
 		Email: sql.NullString{
 			String: req.Email,
-			Valid: true,
+			Valid:  true,
 		},
 		IsActive: sql.NullBool{
-			Bool: false,
+			Bool:  false,
 			Valid: true,
 		},
 	}
@@ -591,14 +591,14 @@ func (app *KeyKeeper) changeUserPassword(w http.ResponseWriter, r *http.Request)
 	updateUserParams := db.UpdateUserParams{
 		HashedPassword: sql.NullString{
 			String: hashedPassword,
-			Valid: true,
+			Valid:  true,
 		},
 		PasswordChangedAt: sql.NullTime{
-			Time: time.Now(),
+			Time:  time.Now(),
 			Valid: true,
 		},
-		ID:  sql.NullInt64{
-			Int64:  pathVar.ID,
+		ID: sql.NullInt64{
+			Int64: pathVar.ID,
 			Valid: true,
 		},
 	}
@@ -699,7 +699,7 @@ type resetUserPasswordQueryStr struct {
 	ResetToken string `json:"reset_token" validate:"required"`
 }
 
-func (app *KeyKeeper) resetUserPassword(w http.ResponseWriter, r *http.Request)  {
+func (app *KeyKeeper) resetUserPassword(w http.ResponseWriter, r *http.Request) {
 	queryMap := r.URL.Query()
 	var reqQueryStr resetUserPasswordQueryStr
 	var err error
@@ -746,14 +746,14 @@ func (app *KeyKeeper) resetUserPassword(w http.ResponseWriter, r *http.Request) 
 	arg := db.UpdateUserParams{
 		HashedPassword: sql.NullString{
 			String: hashedPassword,
-			Valid: true,
+			Valid:  true,
 		},
 		PasswordChangedAt: sql.NullTime{
-			Time: time.Now(),
+			Time:  time.Now(),
 			Valid: true,
 		},
-		ID:  sql.NullInt64{
-			Int64:  payload.UserID,
+		ID: sql.NullInt64{
+			Int64: payload.UserID,
 			Valid: true,
 		},
 	}
@@ -772,7 +772,7 @@ type getUserPathVariable struct {
 	ID int64 `json:"id" validate:"required,min=1"`
 }
 
-func (app *KeyKeeper) getUser(w http.ResponseWriter, r *http.Request)  {
+func (app *KeyKeeper) getUser(w http.ResponseWriter, r *http.Request) {
 	authPayload := app.contextGetToken(r)
 	var pathVar getUserPathVariable
 	var err error

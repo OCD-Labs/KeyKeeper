@@ -39,7 +39,7 @@ func (i *Interval) UnmarshalJSON(json []byte) error {
 	case "hours":
 		*i = Interval(time.Duration(interval) * time.Hour)
 	case "days":
-    *i = Interval(time.Duration(interval) * time.Hour * 24)
+		*i = Interval(time.Duration(interval) * time.Hour * 24)
 	case "months":
 		*i = Interval(time.Duration(interval) * time.Hour * 24 * 30)
 	case "years":
